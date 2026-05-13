@@ -1,0 +1,77 @@
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.18
+    container_name: milvus-etcd
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    command: >
+      etcd
+      --name etcd
+      --data-dir /etcd
+      --listen-client-urls http://0.0.0.0:2379
+      --advertise-client-urls http://etcd:2379
+      --listen-peer-urls http://0.0.0.0:2380
+      --initial-advertise-peer-urls http://etcd:2380
+      --initial-cluster etcd=http://etcd:2380
+      --initial-cluster-token etcd-cluster
+      --initial-cluster-state new
+      --auto-compaction-mode revision
+      --auto-compaction-retention 1000
+      --quota-backend-bytes 4294967296
+      --snapshot-count 50000
+    volumes:
+      - ./volumes/etcd:/etcd
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - infra-net
+
+  milvus:
+    image: milvusdb/milvus:v2.6.14
+    container_name: milvus
+    restart: unless-stopped
+    command: ["milvus", "run", "standalone"]
+    shm_size: 1g
+    security_opt:
+      - seccomp:unconfined
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+      MINIO_ACCESS_KEY_ID: minioadmin
+      MINIO_SECRET_ACCESS_KEY: minioadmin
+      COMMON_STORAGETYPE: remote
+      TZ: Asia/Shanghai
+    ports:
+      - "19530:19530"
+    volumes:
+      - ./volumes/milvus:/var/lib/milvus
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - etcd
+    networks:
+      - infra-net
+
+  attu:
+    image: zilliz/attu:latest
+    container_name: milvus-attu
+    restart: unless-stopped
+    environment:
+      MILVUS_URL: milvus:19530
+      TZ: Asia/Shanghai
+    ports:
+      - "9091:3000"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - milvus
+    networks:
+      - infra-net
+
+networks:
+  infra-net:
+    external: true

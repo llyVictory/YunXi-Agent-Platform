@@ -77,7 +77,7 @@
                 <nacos.config.group>DEFAULT_GROUP</nacos.config.group>
                 <nacos.username>nacos</nacos.username>
                 <nacos.password>nacos</nacos.password>
-                <logstash.address>127.0.0.1:4560</logstash.address>
+                <logstash.address>172.26.70.234:4560</logstash.address>
             </properties>
             <activation>
                 <!-- 默认环境 -->
