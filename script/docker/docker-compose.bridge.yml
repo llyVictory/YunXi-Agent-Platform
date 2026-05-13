@@ -434,7 +434,7 @@ services:
       # 访问域名
       # SERVER_PUBLICBASEURL: https://kibana.cloud.com
     volumes:
-      - ./elk/kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml
+      - ./elk/kibana/config/kibana.bridge.yml:/usr/share/kibana/config/kibana.yml
     networks:
       - yunxi-net
 
