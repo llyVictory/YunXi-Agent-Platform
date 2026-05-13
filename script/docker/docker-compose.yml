@@ -2,6 +2,7 @@ services:
   mysql:
     image: mysql:8.0.42
     container_name: mysql
+    restart: always
     environment:
       # 时区上海
       TZ: Asia/Shanghai
@@ -46,6 +47,7 @@ services:
   redis:
     image: redis:7.2.8
     container_name: redis
+    restart: always
     ports:
       - "6379:6379"
     environment:
@@ -64,6 +66,7 @@ services:
     # pgsty 开源社区 fork 重新维护的最新版 minio
     image: pgsty/minio:RELEASE.2026-02-14T12-00-00Z
     container_name: minio
+    restart: always
     ports:
       # api 端口
       - "9000:9000"
