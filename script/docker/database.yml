@@ -13,7 +13,7 @@ services:
       - "1521:1521"
     volumes:
       # 数据挂载
-      - "/docker/oracle/data:/u01/app/oracle"
+      - "./oracle/data:/u01/app/oracle"
     network_mode: "host"
 
   postgres:
@@ -26,7 +26,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /docker/postgres/data:/var/lib/postgresql/data
+      - ./postgres/data:/var/lib/postgresql/data
     network_mode: "host"
 
   postgres13:
@@ -39,5 +39,5 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - /docker/postgres13/data:/var/lib/postgresql/data
+      - ./postgres13/data:/var/lib/postgresql/data
     network_mode: "host"
