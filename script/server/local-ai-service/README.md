@@ -92,23 +92,102 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ## 启动服务
 
-推荐使用 `.env` 启动：
+### 后台启动（推荐）
+
+推荐在 WSL 中使用 `.env` + `nohup` 后台启动服务：
 
 ```bash
+# 开启自动导出变量模式。
+# 后面 source .env 读取到的变量会自动成为环境变量，Python 可以通过 os.getenv(...) 读取。
 set -a
+
+# 读取当前目录下的 .env 文件。
+# 会加载 HOST、PORT、WORKERS、EMBEDDING_MODEL、RERANK_MODEL 等配置。
 source .env
+
+# 关闭自动导出变量模式，避免后续普通 shell 变量被自动导出。
 set +a
+
+# 后台启动 FastAPI 服务。
+# nohup：终端关闭后服务继续运行。
+# uvicorn ai_service:app：启动 ai_service.py 中的 FastAPI app。
+# --host "$HOST"：使用 .env 中配置的监听地址。
+# --port "$PORT"：使用 .env 中配置的端口。
+# --workers "$WORKERS"：使用 .env 中配置的 worker 数量。
+# > ai_service.log：标准输出写入日志文件。
+# 2>&1：错误输出也写入同一个日志文件。
+# &：放到后台运行。
+nohup uvicorn ai_service:app --host "$HOST" --port "$PORT" --workers "$WORKERS" > ai_service.log 2>&1 &
+```
+
+查看日志：
+
+```bash
+# 实时查看服务日志。
+tail -f ai_service.log
+```
+
+查看进程：
+
+```bash
+# 查看 uvicorn 服务进程。
+ps -ef | grep uvicorn
+```
+
+停止服务：
+
+```bash
+# 停止当前 ai_service 对应的 uvicorn 进程。
+pkill -f "uvicorn ai_service:app"
+```
+
+如果你希望更谨慎，可以先查看 PID 再停止：
+
+```bash
+# 找到 uvicorn 进程 PID。
+ps -ef | grep uvicorn
+
+# 停止指定 PID。
+kill <PID>
+```
+
+### 前台启动（调试用）
+
+前台启动会占用当前终端，日志直接输出在终端里。按 `Ctrl + C` 会停止服务。
+
+```bash
+# 开启自动导出变量模式。
+set -a
+
+# 读取 .env 配置。
+source .env
+
+# 关闭自动导出变量模式。
+set +a
+
+# 前台启动服务，适合首次调试或观察模型加载日志。
 uvicorn ai_service:app --host "$HOST" --port "$PORT" --workers "$WORKERS"
 ```
 
-也可以手动指定环境变量：
+也可以不使用 `.env`，手动指定环境变量后前台启动：
 
 ```bash
+# 设置 PyTorch CPU 线程数。
 export TORCH_NUM_THREADS=4
+
+# 设置 embedding 模型。
 export EMBEDDING_MODEL=BAAI/bge-small-zh-v1.5
+
+# 设置 reranker 模型。
 export RERANK_MODEL=cross-encoder/mmarco-mMiniLMv2-L6-H384-v1
+
+# 设置 embedding 批大小。
 export EMBEDDING_BATCH_SIZE=32
+
+# 设置 rerank 批大小。
 export RERANK_BATCH_SIZE=8
+
+# 前台启动服务。
 uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1
 ```
 
