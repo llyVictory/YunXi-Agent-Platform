@@ -53,7 +53,8 @@ conda activate yunxi-ai-service
 安装依赖：
 
 ```bash
-pip install -r requirements.txt
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 后续每次启动服务前，先进入目录并激活环境：
@@ -83,7 +84,8 @@ source .venv-ai/bin/activate
 安装依赖：
 
 ```bash
-pip install -r requirements.txt
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
 如果你已经有专门的 Python 环境，也可以直接使用已有环境，不必创建 `.venv-ai`。
