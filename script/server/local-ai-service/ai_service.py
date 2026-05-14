@@ -8,8 +8,13 @@ from pydantic import BaseModel, Field
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
 
-EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
-RERANK_MODEL_NAME = os.getenv(
+def _env_str(name: str, default: str) -> str:
+    value = os.getenv(name, default)
+    return value.strip().strip("'").strip('"')
+
+
+EMBEDDING_MODEL_NAME = _env_str("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
+RERANK_MODEL_NAME = _env_str(
     "RERANK_MODEL",
     "cross-encoder/mmarco-mMiniLMv2-L6-H384-v1",
 )

@@ -94,15 +94,25 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ### 后台启动（推荐）
 
-推荐在 WSL 中使用 `.env` + `nohup` 后台启动服务：
+推荐在 WSL 中使用 `.env` + `nohup` 后台启动服务。监听地址、端口和 worker 数量使用固定推荐值：
+
+```text
+host: 0.0.0.0
+port: 18080
+workers: 1
+```
 
 ```bash
+# 如果 .env 是从 Windows 创建或编辑的，先转换 CRLF 换行为 Linux LF。
+# 否则 source .env 后变量可能携带不可见的 \r，导致模型名等参数异常。
+sed -i 's/\r$//' .env
+
 # 开启自动导出变量模式。
 # 后面 source .env 读取到的变量会自动成为环境变量，Python 可以通过 os.getenv(...) 读取。
 set -a
 
 # 读取当前目录下的 .env 文件。
-# 会加载 HOST、PORT、WORKERS、EMBEDDING_MODEL、RERANK_MODEL 等配置。
+# 会加载 TORCH_NUM_THREADS、EMBEDDING_MODEL、RERANK_MODEL 等模型服务配置。
 source .env
 
 # 关闭自动导出变量模式，避免后续普通 shell 变量被自动导出。
@@ -111,13 +121,19 @@ set +a
 # 后台启动 FastAPI 服务。
 # nohup：终端关闭后服务继续运行。
 # uvicorn ai_service:app：启动 ai_service.py 中的 FastAPI app。
-# --host "$HOST"：使用 .env 中配置的监听地址。
-# --port "$PORT"：使用 .env 中配置的端口。
-# --workers "$WORKERS"：使用 .env 中配置的 worker 数量。
+# --host 0.0.0.0：监听所有网卡，方便 Windows 侧访问 WSL 服务。
+# --port 18080：固定本地 AI 服务端口。
+# --workers 1：本机推荐 1 个 worker，避免重复加载模型占用内存。
 # > ai_service.log：标准输出写入日志文件。
 # 2>&1：错误输出也写入同一个日志文件。
 # &：放到后台运行。
-nohup uvicorn ai_service:app --host "$HOST" --port "$PORT" --workers "$WORKERS" > ai_service.log 2>&1 &
+nohup uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
+```
+
+也可以直接用一行命令后台启动：
+
+```bash
+sed -i 's/\r$//' .env && set -a && source .env && set +a && nohup uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
 ```
 
 查看日志：
@@ -156,6 +172,9 @@ kill <PID>
 前台启动会占用当前终端，日志直接输出在终端里。按 `Ctrl + C` 会停止服务。
 
 ```bash
+# 如果 .env 是从 Windows 创建或编辑的，先转换 CRLF 换行为 Linux LF。
+sed -i 's/\r$//' .env
+
 # 开启自动导出变量模式。
 set -a
 
@@ -166,7 +185,7 @@ source .env
 set +a
 
 # 前台启动服务，适合首次调试或观察模型加载日志。
-uvicorn ai_service:app --host "$HOST" --port "$PORT" --workers "$WORKERS"
+uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1
 ```
 
 也可以不使用 `.env`，手动指定环境变量后前台启动：
