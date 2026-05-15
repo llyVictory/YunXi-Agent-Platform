@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    dynamic:
+      # 云犀业务库，系统用户、租户、权限仍复用 RuoYi 原库
+      primary: master
+      datasource:
+        master:
+          type: ${spring.datasource.type}
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:mysql://172.26.70.234:3306/yunxi_agent_platform?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8&rewriteBatchedStatements=true&allowPublicKeyRetrieval=true
+          username: root
+          password: ruoyi123
+
+yunxi:
+  ai:
+    chat:
+      provider: openai-compatible
+      base-url: https://new.lemonapi.site/v1
+      model: "[L]gemini-2.5-flash"
+      # API Key 由 Nacos 控制台或环境变量注入，不提交到源码仓库
+      api-key: ${YUNXI_LLM_API_KEY:}
+      timeout: 30s
+    embedding:
+      provider: local
+      base-url: http://172.26.70.234:18080
+      model: ./models/bge-small-zh-v1.5
+      timeout: 5s
+      max-concurrency: 20
+    rerank:
+      provider: local
+      base-url: http://172.26.70.234:18080
+      model: ./models/bce-reranker-base_v1
+      timeout: 8s
+      max-concurrency: 10
+      fallback-enabled: true

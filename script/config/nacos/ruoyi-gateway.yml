@@ -64,6 +64,13 @@ spring:
                 - Path=/workflow/**
               filters:
                 - StripPrefix=1
+            # 云犀 Agent 服务
+            - id: ruoyi-yunxi-agent
+              uri: lb://ruoyi-yunxi-agent
+              predicates:
+                - Path=/yunxi/**
+              filters:
+                - StripPrefix=1
             # warm-flow服务
             - id: warm-flow
               uri: lb://ruoyi-workflow
