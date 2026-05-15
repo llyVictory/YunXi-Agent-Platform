@@ -94,7 +94,7 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ### 后台启动（推荐）
 
-推荐在 WSL 中使用 `.env` + `nohup` 后台启动服务。监听地址、端口和 worker 数量使用固定推荐值：
+推荐在 WSL 中使用 `.env` + `nohup` 后台启动服务。服务启动时会自动读取当前目录下的 `.env`，不需要再手动 `source .env`。监听地址、端口和 worker 数量使用固定推荐值：
 
 ```text
 host: 0.0.0.0
@@ -103,21 +103,6 @@ workers: 1
 ```
 
 ```bash
-# 如果 .env 是从 Windows 创建或编辑的，先转换 CRLF 换行为 Linux LF。
-# 否则 source .env 后变量可能携带不可见的 \r，导致模型名等参数异常。
-sed -i 's/\r$//' .env
-
-# 开启自动导出变量模式。
-# 后面 source .env 读取到的变量会自动成为环境变量，Python 可以通过 os.getenv(...) 读取。
-set -a
-
-# 读取当前目录下的 .env 文件。
-# 会加载 TORCH_NUM_THREADS、EMBEDDING_MODEL、RERANK_MODEL 等模型服务配置。
-source .env
-
-# 关闭自动导出变量模式，避免后续普通 shell 变量被自动导出。
-set +a
-
 # 后台启动 FastAPI 服务。
 # nohup：终端关闭后服务继续运行。
 # /root/miniconda3/envs/yunxi-ai-service/bin/uvicorn：使用 conda 环境里的 uvicorn。
@@ -134,7 +119,7 @@ nohup /root/miniconda3/envs/yunxi-ai-service/bin/uvicorn ai_service:app --host 0
 也可以直接用一行命令后台启动：
 
 ```bash
-sed -i 's/\r$//' .env && set -a && source .env && set +a && nohup /root/miniconda3/envs/yunxi-ai-service/bin/uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
+nohup /root/miniconda3/envs/yunxi-ai-service/bin/uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
 ```
 
 如果你的 conda 安装路径不是 `/root/miniconda3`，先用下面命令确认实际路径：
@@ -185,18 +170,6 @@ kill <PID>
 前台启动会占用当前终端，日志直接输出在终端里。按 `Ctrl + C` 会停止服务。
 
 ```bash
-# 如果 .env 是从 Windows 创建或编辑的，先转换 CRLF 换行为 Linux LF。
-sed -i 's/\r$//' .env
-
-# 开启自动导出变量模式。
-set -a
-
-# 读取 .env 配置。
-source .env
-
-# 关闭自动导出变量模式。
-set +a
-
 # 前台启动服务，适合首次调试或观察模型加载日志。
 uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1
 ```
@@ -208,10 +181,10 @@ uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1
 export TORCH_NUM_THREADS=4
 
 # 设置 embedding 模型。
-export EMBEDDING_MODEL=BAAI/bge-small-zh-v1.5
+export EMBEDDING_MODEL=./models/bge-small-zh-v1.5
 
 # 设置 reranker 模型。
-export RERANK_MODEL=cross-encoder/mmarco-mMiniLMv2-L6-H384-v1
+export RERANK_MODEL=./models/bce-reranker-base_v1
 
 # 设置 embedding 批大小。
 export EMBEDDING_BATCH_SIZE=32
@@ -228,6 +201,11 @@ uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1
 - `workers=1`：推荐本机默认值。
 - `workers=2`：会加载两份 embedding/rerank 模型，占用两份内存，仅在内存足够且确有需要时尝试。
 - `RERANK_BATCH_SIZE=4~8`：reranker 比 embedding 更耗 CPU，响应慢时优先调小。
+
+说明：
+
+- 启动时会自动读取当前目录 `.env`，优先使用系统环境变量；如果你已经显式 `export` 了同名变量，不会被 `.env` 覆盖。
+- 建议把 `.env` 保存为 LF 换行；若是 Windows 工具生成的 CRLF 文件，`python-dotenv` 也能正常解析，无需每次手动执行 `sed`。
 
 ## 健康检查
 

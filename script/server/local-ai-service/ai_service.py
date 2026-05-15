@@ -7,6 +7,11 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from sentence_transformers import CrossEncoder, SentenceTransformer
 
+from env_loader import load_local_dotenv
+
+
+load_local_dotenv()
+
 
 def _env_str(name: str, default: str) -> str:
     value = os.getenv(name, default)
