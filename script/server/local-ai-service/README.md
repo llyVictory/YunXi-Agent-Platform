@@ -7,14 +7,14 @@
 ## 默认模型
 
 ```text
-embedding: BAAI/bge-small-zh-v1.5
-reranker: cross-encoder/mmarco-mMiniLMv2-L6-H384-v1
+embedding: ./models/bge-small-zh-v1.5
+reranker: ./models/bce-reranker-base_v1
 ```
 
 说明：
 
 - `BAAI/bge-small-zh-v1.5`：轻量中文 embedding 模型，适合本地中文知识库向量化和 RAG 演示。
-- `cross-encoder/mmarco-mMiniLMv2-L6-H384-v1`：轻量多语言 cross-encoder reranker，适合本地模拟中文 rerank 链路。
+- `bce-reranker-base_v1`：中文 reranker 效果更贴近本项目，适合本地模拟运营商知识库 rerank 链路。
 
 ## 目录文件
 
@@ -120,20 +120,33 @@ set +a
 
 # 后台启动 FastAPI 服务。
 # nohup：终端关闭后服务继续运行。
-# uvicorn ai_service:app：启动 ai_service.py 中的 FastAPI app。
+# /root/miniconda3/envs/yunxi-ai-service/bin/uvicorn：使用 conda 环境里的 uvicorn。
+# ai_service:app：启动 ai_service.py 中的 FastAPI app。
 # --host 0.0.0.0：监听所有网卡，方便 Windows 侧访问 WSL 服务。
 # --port 18080：固定本地 AI 服务端口。
 # --workers 1：本机推荐 1 个 worker，避免重复加载模型占用内存。
 # > ai_service.log：标准输出写入日志文件。
 # 2>&1：错误输出也写入同一个日志文件。
 # &：放到后台运行。
-nohup uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
+nohup /root/miniconda3/envs/yunxi-ai-service/bin/uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
 ```
 
 也可以直接用一行命令后台启动：
 
 ```bash
-sed -i 's/\r$//' .env && set -a && source .env && set +a && nohup uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
+sed -i 's/\r$//' .env && set -a && source .env && set +a && nohup /root/miniconda3/envs/yunxi-ai-service/bin/uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
+```
+
+如果你的 conda 安装路径不是 `/root/miniconda3`，先用下面命令确认实际路径：
+
+```bash
+which uvicorn
+```
+
+如果已经执行了 `conda activate yunxi-ai-service`，并且 `which uvicorn` 能输出当前环境下的 uvicorn，也可以使用：
+
+```bash
+nohup uvicorn ai_service:app --host 0.0.0.0 --port 18080 --workers 1 > ai_service.log 2>&1 &
 ```
 
 查看日志：
@@ -280,13 +293,13 @@ yunxi:
     embedding:
       provider: local
       base-url: http://localhost:18080
-      model: BAAI/bge-small-zh-v1.5
+      model: ./models/bge-small-zh-v1.5
       timeout: 5s
       max-concurrency: 20
     rerank:
       provider: local
       base-url: http://localhost:18080
-      model: cross-encoder/mmarco-mMiniLMv2-L6-H384-v1
+      model: ./models/bce-reranker-base_v1
       timeout: 8s
       max-concurrency: 10
       fallback-enabled: true
